@@ -119,14 +119,12 @@ function LoginForm() {
         </button>
       </div>
 
-      {registrationAllowed && (
-        <div className="text-center text-xs text-slate-500 mt-4">
-          No account configured?{' '}
-          <Link href="/register" className="font-semibold text-brand-blue hover:underline">
-            Create Admin Account
-          </Link>
-        </div>
-      )}
+      <div className="text-center text-xs text-slate-500 mt-4">
+        Need an account?{' '}
+        <Link href="/register" className="font-semibold text-brand-blue hover:underline">
+          Register here
+        </Link>
+      </div>
     </form>
   );
 }
@@ -149,7 +147,7 @@ export default function Login() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 border border-slate-200 rounded-lg sm:px-10 shadow-xs">
+        <div className="bg-white py-8 px-4 border border-slate-200 rounded-lg sm:px-10 shadow-xs animate-fade-in">
           <Suspense fallback={
             <div className="flex justify-center py-8">
               <div className="w-8 h-8 border-2 border-brand-blue/20 border-t-brand-blue rounded-lg animate-spin" />
@@ -157,6 +155,13 @@ export default function Login() {
           }>
             <LoginForm />
           </Suspense>
+        </div>
+
+        <div className="mt-8 text-center text-xs text-slate-400">
+          <p>App built by <span className="font-semibold text-slate-500">TechspaceNG</span></p>
+          <p className="mt-1">
+            Email: <a href="mailto:techspace544@gmail.com" className="hover:underline text-brand-blue transition-colors">techspace544@gmail.com</a>
+          </p>
         </div>
       </div>
     </div>
