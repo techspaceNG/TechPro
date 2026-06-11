@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/db';
 import Note from '@/lib/models/Note';
+import Project from '@/lib/models/Project';
 
 export async function GET(req: Request) {
   try {
@@ -13,13 +14,14 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = (session.user as any).id;
     const { searchParams } = new URL(req.url);
     const projectId = searchParams.get('projectId');
     const isGlobal = searchParams.get('isGlobal');
 
     await dbConnect();
 
-    const query: any = {};
+    const query: any = { user: userId };
     if (projectId) {
       query.project = projectId;
     } else if (isGlobal === 'true') {
@@ -40,6 +42,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = (session.user as any).id;
     const { title, content, project, isGlobal } = await req.json();
 
     if (!title || !content) {
@@ -47,11 +50,23 @@ export async function POST(req: Request) {
     }
 
     await dbConnect();
+
+    // Verify linked project belongs to this user
+    let linkedProject = null;
+    if (project) {
+      const projectExists = await Project.findOne({ _id: project, user: userId });
+      if (!projectExists) {
+        return NextResponse.json({ error: 'Invalid project ID or permission denied' }, { status: 400 });
+      }
+      linkedProject = project;
+    }
+
     const note = await Note.create({
       title,
+      user: userId,
       content,
-      project: project || null,
-      isGlobal: isGlobal ?? !project,
+      project: linkedProject,
+      isGlobal: isGlobal ?? !linkedProject,
     });
 
     return NextResponse.json(note, { status: 201 });

@@ -13,8 +13,9 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = (session.user as any).id;
     await dbConnect();
-    const project = await Project.findById(params.id);
+    const project = await Project.findOne({ _id: params.id, user: userId });
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
@@ -32,11 +33,12 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = (session.user as any).id;
     const { name, description, status, tasks } = await req.json();
 
     await dbConnect();
 
-    const project = await Project.findById(params.id);
+    const project = await Project.findOne({ _id: params.id, user: userId });
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
@@ -69,15 +71,16 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = (session.user as any).id;
     await dbConnect();
-    const project = await Project.findByIdAndDelete(params.id);
+    const project = await Project.findOneAndDelete({ _id: params.id, user: userId });
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    // Cascade delete project dependencies
-    await Credential.deleteMany({ project: params.id });
-    await Note.deleteMany({ project: params.id });
+    // Cascade delete project dependencies belonging to this user
+    await Credential.deleteMany({ project: params.id, user: userId });
+    await Note.deleteMany({ project: params.id, user: userId });
 
     return NextResponse.json({ success: true, message: 'Project deleted successfully' });
   } catch (error: any) {

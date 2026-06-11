@@ -7,6 +7,11 @@ const NoteSchema = new Schema(
       ref: 'Project',
       required: false, // Optional for global notes
     },
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
     title: {
       type: String,
       required: true,

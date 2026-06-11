@@ -7,6 +7,11 @@ const DocumentSchema = new Schema(
       required: true,
       trim: true,
     },
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
     content: {
       type: String, // Plain text extracted from document
       required: true,

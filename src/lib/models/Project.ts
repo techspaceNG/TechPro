@@ -13,6 +13,11 @@ const ProjectSchema = new Schema(
       required: true,
       trim: true,
     },
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
     description: {
       type: String,
       trim: true,

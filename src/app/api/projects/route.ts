@@ -13,8 +13,9 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = (session.user as any).id;
     await dbConnect();
-    const projects = await Project.find({}).sort({ updatedAt: -1 });
+    const projects = await Project.find({ user: userId }).sort({ updatedAt: -1 });
     return NextResponse.json(projects);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -28,6 +29,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = (session.user as any).id;
     const { name, description, status } = await req.json();
 
     if (!name) {
@@ -37,6 +39,7 @@ export async function POST(req: Request) {
     await dbConnect();
     const project = await Project.create({
       name,
+      user: userId,
       description,
       status: status || 'active',
       progress: 0,

@@ -11,8 +11,9 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = (session.user as any).id;
     await dbConnect();
-    const doc = await Document.findByIdAndDelete(params.id);
+    const doc = await Document.findOneAndDelete({ _id: params.id, user: userId });
     if (!doc) {
       return NextResponse.json({ error: 'Document not found' }, { status: 404 });
     }

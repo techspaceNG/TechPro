@@ -7,6 +7,11 @@ const CredentialSchema = new Schema(
       ref: 'Project',
       required: false, // Can be global or project-specific
     },
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
     site: {
       type: String,
       required: true,

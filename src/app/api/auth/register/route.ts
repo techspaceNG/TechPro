@@ -7,9 +7,7 @@ import User from '@/lib/models/User';
 
 export async function GET() {
   try {
-    await dbConnect();
-    const count = await User.countDocuments();
-    return NextResponse.json({ registrationAllowed: count === 0 });
+    return NextResponse.json({ registrationAllowed: true });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -28,11 +26,12 @@ export async function POST(req: Request) {
 
     await dbConnect();
 
-    const count = await User.countDocuments();
-    if (count > 0) {
+    // Check if email is already registered
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
       return NextResponse.json(
-        { error: 'Registration is disabled. An administrator account already exists.' },
-        { status: 403 }
+        { error: 'An account with this email address already exists.' },
+        { status: 400 }
       );
     }
 
@@ -47,7 +46,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ 
       success: true, 
-      message: 'Administrator account created successfully' 
+      message: 'Account created successfully' 
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

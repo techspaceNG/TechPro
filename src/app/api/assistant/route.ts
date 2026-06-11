@@ -8,22 +8,23 @@ import Note from '@/lib/models/Note';
 import { encrypt } from '@/lib/encryption';
 
 // Helper to find project by name or ID
-async function resolveProject(projectNameOrId: string) {
-  if (!projectNameOrId) return null;
+// Helper to find project by name or ID, isolated by user
+async function resolveProject(projectNameOrId: string, userId: string) {
+  if (!projectNameOrId || !userId) return null;
   const cleaned = projectNameOrId.trim();
   
   // 1. Try Mongoose ObjectID
   if (cleaned.match(/^[0-9a-fA-F]{24}$/)) {
-    const project = await Project.findById(cleaned);
+    const project = await Project.findOne({ _id: cleaned, user: userId });
     if (project) return project;
   }
   
   // 2. Try Exact Name Case-Insensitive
-  const projectExact = await Project.findOne({ name: new RegExp(`^${cleaned}$`, 'i') });
+  const projectExact = await Project.findOne({ name: new RegExp(`^${cleaned}$`, 'i'), user: userId });
   if (projectExact) return projectExact;
   
   // 3. Try Partial Name Case-Insensitive
-  const projectPartial = await Project.findOne({ name: new RegExp(cleaned, 'i') });
+  const projectPartial = await Project.findOne({ name: new RegExp(cleaned, 'i'), user: userId });
   return projectPartial;
 }
 
@@ -181,10 +182,11 @@ Always summarize the actions you took in a professional, brief technical tone.`
     const toolName = functionCall.name;
     const toolInput = functionCall.args;
     let toolResult: any = null;
+    const userId = (session.user as any).id;
 
     try {
       if (toolName === 'get_projects') {
-        const projectsList = await Project.find({}).select('name status progress tasks description');
+        const projectsList = await Project.find({ user: userId }).select('name status progress tasks description');
         toolResult = { success: true, count: projectsList.length, projects: projectsList };
       } 
       
@@ -192,6 +194,7 @@ Always summarize the actions you took in a professional, brief technical tone.`
         const { name, description, status } = toolInput;
         const newProj = await Project.create({
           name,
+          user: userId,
           description: description || '',
           status: status || 'active',
           progress: 0,
@@ -202,7 +205,7 @@ Always summarize the actions you took in a professional, brief technical tone.`
       
       else if (toolName === 'add_task') {
         const { projectNameOrId, taskTitle } = toolInput;
-        const project = await resolveProject(projectNameOrId);
+        const project = await resolveProject(projectNameOrId, userId);
         if (!project) {
           toolResult = { success: false, error: `Project '${projectNameOrId}' not found.` };
         } else {
@@ -221,7 +224,7 @@ Always summarize the actions you took in a professional, brief technical tone.`
       
       else if (toolName === 'toggle_task') {
         const { projectNameOrId, taskTitleOrId, completed } = toolInput;
-        const project = await resolveProject(projectNameOrId);
+        const project = await resolveProject(projectNameOrId, userId);
         if (!project) {
           toolResult = { success: false, error: `Project '${projectNameOrId}' not found.` };
         } else {
@@ -247,12 +250,13 @@ Always summarize the actions you took in a professional, brief technical tone.`
         const { site, username, password, projectNameOrId, notes } = toolInput;
         let project = null;
         if (projectNameOrId) {
-          project = await resolveProject(projectNameOrId);
+          project = await resolveProject(projectNameOrId, userId);
         }
 
         const encryptedPass = encrypt(password);
         const newCred = await Credential.create({
           site,
+          user: userId,
           username,
           password: encryptedPass,
           project: project ? project._id : null,
@@ -275,11 +279,12 @@ Always summarize the actions you took in a professional, brief technical tone.`
         const { title, content, projectNameOrId, isGlobal } = toolInput;
         let project = null;
         if (projectNameOrId) {
-          project = await resolveProject(projectNameOrId);
+          project = await resolveProject(projectNameOrId, userId);
         }
 
         const newNote = await Note.create({
           title,
+          user: userId,
           content,
           project: project ? project._id : null,
           isGlobal: isGlobal ?? !project,

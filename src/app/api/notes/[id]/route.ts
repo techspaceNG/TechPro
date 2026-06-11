@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/db';
 import Note from '@/lib/models/Note';
+import Project from '@/lib/models/Project';
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -11,13 +12,21 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = (session.user as any).id;
     const { title, content, project, isGlobal } = await req.json();
 
     await dbConnect();
 
-    const note = await Note.findById(params.id);
+    const note = await Note.findOne({ _id: params.id, user: userId });
     if (!note) {
       return NextResponse.json({ error: 'Note not found' }, { status: 404 });
+    }
+
+    if (project) {
+      const projectExists = await Project.findOne({ _id: project, user: userId });
+      if (!projectExists) {
+        return NextResponse.json({ error: 'Invalid project ID or permission denied' }, { status: 400 });
+      }
     }
 
     if (title !== undefined) note.title = title;
@@ -40,8 +49,9 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = (session.user as any).id;
     await dbConnect();
-    const note = await Note.findByIdAndDelete(params.id);
+    const note = await Note.findOneAndDelete({ _id: params.id, user: userId });
     if (!note) {
       return NextResponse.json({ error: 'Note not found' }, { status: 404 });
     }

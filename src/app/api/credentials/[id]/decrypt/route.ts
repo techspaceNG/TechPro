@@ -12,9 +12,10 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = (session.user as any).id;
     await dbConnect();
 
-    const credential = await Credential.findById(params.id);
+    const credential = await Credential.findOne({ _id: params.id, user: userId });
     if (!credential) {
       return NextResponse.json({ error: 'Credential not found' }, { status: 404 });
     }

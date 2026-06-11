@@ -13,8 +13,9 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = (session.user as any).id;
     await dbConnect();
-    const documents = await Document.find({}).sort({ createdAt: -1 });
+    const documents = await Document.find({ user: userId }).sort({ createdAt: -1 });
     return NextResponse.json(documents);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -28,6 +29,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = (session.user as any).id;
     const { name, content, fileType, size } = await req.json();
 
     if (!name || !content) {
@@ -89,6 +91,7 @@ Provide your response in JSON format with exactly two keys:
     await dbConnect();
     const doc = await Document.create({
       name,
+      user: userId,
       content,
       summary,
       analysis,
